@@ -3,15 +3,17 @@ using namespace std;
 
 class Student { 
 	public:
-	~Student(){
-		counter--;
-		cout<<"-----------Counter Value-----------: "<<counter<<endl;
-	}
+	
 
 	Student(){
 		counter++;
 		name = "Not Set";
 	}
+	~Student(){
+		counter--;
+		cout<<"-----------Counter Value-----------: "<<counter<<endl;
+	}
+
 		string name;
 		static int counter; 
 		//static int counter=0; // ISO C++ forbids in-class initialization of non-const static member
@@ -27,17 +29,18 @@ void method(){
 
 int main() 
 { 
-	//Student::counter = 1; // Allowed
+	//Student::counter = 1; // Allowed 
 	cout<<"Counter Value: "<<Student::counter<<endl; 
 	Student std1; 
-	cout<<"Counter Value: "<<std1.counter<<endl; 
+	cout<<"Counter Value: "<<std1.counter<<endl;
+	  //OR
 	cout<<"Counter Value: "<<Student::counter<<endl; 
 
 	Student std2;
 	cout<<"Counter Value: "<<std2.counter<<endl; 
 	
 	Student std3;
-	cout<<"Counter Value: "<<std3.counter<<endl; 
+	cout<<"Counter Valu3: "<<std3.counter<<endl; 
 	
 	method();
 	cout<<"Counter Value: "<<std1.counter<<endl; 

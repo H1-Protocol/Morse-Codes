@@ -1,87 +1,89 @@
-#include<iostream>
-#include<string>
+#include <iostream>
+#include <string>
 using namespace std;
 
-class Person{
-	protected:
-		string name;
-		string gender;
-	public:
-        Person(string name = "", string gender = "") : name(name), gender(gender)   
-        {}
-		void setPersonInfo(string n, string g){
-			name = n;
-			gender = g;
-		}
-		
-		void display(){
-			cout << "Person Name  : " << name <<endl;
-			cout << "Person Gender: " << gender <<endl;
-		}
+class Person {
+protected:
+    string name;
+    int age;
+
+public:
+    //Default Constructor
+    Person() : name("Unknown"), age(0) {}
+
+    //Parameterized Constructor
+    Person(string n, int a) : name(n), age(a) {}
+
+    //Overridden Function 
+    virtual void display() {
+        cout << "Name: " << name << ", Age: " << age << endl;
+    }
 };
 
-class Student:public Person{
-	protected:
-		int rollno;
-		float gpa;
-	public:
-        Student(string name = "", string gender = "", int rollno = 0, float gpa = 0.0) : Person(name, gender), rollno(rollno), gpa(gpa)   
-        {}
-        void setStudentInfo(string n, string g, int roll, float gp){
-			name = n;
-			gender = g;
-			rollno = roll;
-			gpa = gp;
-		}
-		
-		void display(){
-			cout << "Student Name     : " << name <<endl;
-			cout << "Student Gender   : " << gender <<endl;
-			cout << "Student Roll no  : " << rollno <<endl;
-			cout << "Student GPA      : " << gpa <<endl;
-		}
+class Student : public Person {
+private:
+    int rollNo;
+    float marks;
+
+public:
+    Student() : Person(), rollNo(0), marks(0.0) {}
+
+    Student(string n, int a, int r, float m) : Person(n, a), rollNo(r), marks(m) {}
+
+    // Function Overloading
+    void setData(int r) {
+        rollNo = r;
+    }
+    void setData(int r, float m) {
+        rollNo = r;
+        marks = m;
+    }
+
+    void display() override {
+        Person::display(); // Call base version
+        cout << "Roll No: " << rollNo << ", Marks: " << marks << endl;
+    }
+
+    Student operator+(const Student& other) {
+        Student temp;
+        temp.name = "Combined Student";
+        temp.marks = this->marks + other.marks;
+        return temp;
+    }
+
+    void operator-(Student& other) {
+        swap(this->name, other.name);
+        swap(this->age, other.age);
+        swap(this->rollNo, other.rollNo);
+        swap(this->marks, other.marks);
+    }
+    
+    float getMarks() { return marks; }
 };
 
-class GraduateStudent:public Student{
-	protected:
-	string thesisTitle;	
-	public:
-        GraduateStudent(string name = "", string gender = "", int rollno = 0, float gpa = 0.0, string thesisTitle = "") : Student(name, gender, rollno, gpa), thesisTitle(thesisTitle)   
-        {}
+int main() {
+    // Creating objects using different constructors
+    Student s1("Alice", 20, 101, 85.5);
+    Student s2("Bob", 21, 102, 75.0);
 
-		void setGraduateStudentInfo(string n, string g, int roll, float gp, string thesis){
-			name = n;
-			gender = g;
-			rollno = roll;
-			gpa = gp;
-			thesisTitle = thesis;
-		}	
+    cout << "--- Initial Data ---" << endl;
+    s1.display();
+    s2.display();
 
-		void display(){
-			cout << "Graduate Student Name     : " << name <<endl;
-			cout << "Graduate Student Gender   : " << gender <<endl;
-			cout << "Graduate Student Roll no  : " << rollno <<endl;
-			cout << "Graduate Student GPA      : " << gpa <<endl;
-			cout << "Graduate Student Thesis   : " << thesisTitle <<endl;
-		}
+    // Demonstrate Function Overloading
+    s1.setData(105, 92.0); 
+    cout << "\n--- After setData Overloading ---" << endl;
+    s1.display();
 
-};
+    // Demonstrate Operator Overloading (+)
+    Student s3 = s1 + s2;
+    cout << "\nTotal Marks of s1 + s2: " << s3.getMarks() << endl;
 
-int main(){
-	Person p1;  
-	p1.setPersonInfo("Kaisar", "Male");
-	p1.display();
-	
-	cout<<"-------------------" <<endl;
-	
-	Student s1;
-	s1.setStudentInfo("Kamal", "Male", 102, 3.2);
-	s1.display();
-	
-	cout<<"-------------------" <<endl;
-	GraduateStudent g1;
-	g1.setGraduateStudentInfo("Kamal", "Male", 102, 3.2, "AI in Healthcare");
-	g1.display();
+    // Demonstrate Operator Overloading (-) to swap
+    cout << "\n--- Swapping s1 and s2 using '-' operator ---" << endl;
+    s1 - s2; 
+    s1.display();
+    s2.display();
 
-	return 0;
+    return 0;
 }

@@ -1,0 +1,32 @@
+
+✦ The game uses text commands that you type into the console. Here is exactly how to control your character:
+
+  1. Movement
+  Type move followed by the direction shown in the "Exits" list.
+   * move north - Go to the Study.
+   * move east - Go to the Kitchen.
+   * move south - Return to the Hallway (if you're in the Study).
+   * move west - Return to the Hallway (if you're in the Kitchen).
+   * move down - Enter the Cellar (from the Kitchen).
+
+  2. Items & Interaction
+   * take <item> - Pick up an item you see in the room (e.g., take Letter).
+   * use <item> - Use or examine an item in your inventory (e.g., use Letter).
+   * inventory - List everything you are currently carrying.
+
+  3. System Commands
+   * save - Saves your current name and location to save.txt.
+   * quit - Exits the game.
+
+  ---
+
+  Quick Walkthrough (How to Win)
+   1. move north -> You are in the Study.
+   2. take Letter -> You found the first clue!
+   3. move south -> Back to the Hallway.
+   4. move east -> You are in the Kitchen.
+   5. take IronKey -> You found the second item.
+   6. move down -> You enter the Cellar.
+   7. take Note -> WIN! You found all 3 items and solved the mystery.
+
+  Note: When typing commands, make sure the spelling matches the item names (like Letter or IronKey) exactly!
