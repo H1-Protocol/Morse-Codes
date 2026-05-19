@@ -73,3 +73,9 @@ int main() {
     delete emp;
     return 0;
 }
+
+
+
+// git add .
+// git commit -m "Your descriptive commit message here"
+// git push
