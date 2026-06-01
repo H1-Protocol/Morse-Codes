@@ -11,7 +11,7 @@ protected:
     static int totalCars;
 
 public:
-    Car(string b, string m, int y, double p):make(b), model(m), year(y), price(p) {
+    Car(string make, string model, int year, double price):make(make), model(model), year(year), price(price) {
         totalCars++;
     }
 
@@ -41,7 +41,7 @@ public:
 int Car::totalCars = 0;
 class ClassicCar : public Car {
 public:
-    ClassicCar(string b, string m, int y, double p) : Car(b, m, y, p) {}
+    ClassicCar(string make, string model, int year, double price) : Car(make, model, year, price) {}
 
     string getType() const {
         return "Classic";
@@ -58,7 +58,7 @@ class ModifiedCar : public Car {
     string modification;
 
 public:
-    ModifiedCar(string b, string m, int y, double p, string mod) : Car(b, m, y, p) {
+    ModifiedCar(string make, string model, int year, double price, string mod) : Car(make, model, year, price) {
         modification = mod;
     }
 
@@ -82,7 +82,7 @@ public:
         budget = 0;
     }
 
-    Bidder(string n, double b) : name(n), budget(b){}
+    Bidder(string name, double budget) : name(name), budget(budget){}
 
     string getName() const {
         return name;
@@ -102,9 +102,9 @@ class Auction {
     int bidderCount;
 
 public:
-    Auction(string name):houseName(name), carCount(0), bidderCount(0){}
+    Auction(string Aucname):houseName(Aucname), carCount(0), bidderCount(0){}
 
-    void addCar(Car* c) {
+    void addCar(Car* c) {   
         if (carCount >= 6) {
             throw "Auction is full! Max 6 lots.";
         }
@@ -114,6 +114,9 @@ public:
     }
 
     void addBidder(Bidder b) {
+           if (bidderCount >= 10) {
+            throw "Auction is full of People! Max 10 bidders.";
+        }
         bidders[bidderCount] = b;
         bidderCount++;
     }
@@ -138,24 +141,51 @@ public:
     }
 
     void saveToFile(string filename) const {
-        ofstream file(filename);
+    ofstream file(filename);
 
-        if (!file.is_open()) {
-            throw "Could not open file!";
-        }
-
-        file << houseName << endl;
-
-        for (int i = 0; i < carCount; i++) {
-            file << lots[i]->getType() << " | "
-                 << lots[i]->getName() << " | $"
-                 << lots[i]->getPrice() << endl;
-        }
-
-        file.close();
-
-        cout << "\nNOTE: Saved Auction Data to file '" << filename <<"'"<< endl;
+    if (!file.is_open()) {
+        throw "Could not open file!";
     }
+
+    file << "===== " << houseName << " =====" << endl;
+
+    // Save Cars
+    file << "\n--- Auction Lots ---" << endl;
+    for (int i = 0; i < carCount; i++) {
+        file << lots[i]->getType() << " | "
+             << lots[i]->getName() << " | $"
+             << lots[i]->getPrice() << endl;
+    }
+
+    // Save Bidders
+    file << "\n--- Registered Bidders ---" << endl;
+    for (int i = 0; i < bidderCount; i++) {
+        file << bidders[i].getName()
+             << " | Budget: $"
+             << bidders[i].getBudget() << endl;
+    }
+
+    file.close();
+
+    cout << "\nNOTE: Saved Auction Data and Bidders to file '"
+         << filename << "'" << endl;
+}
+    void readFromFile(string filename) {
+    ifstream file(filename);
+
+    if (!file.is_open()) {
+        throw "Could not open file!";
+    }
+
+    string line;
+
+    cout << "\nReading file contents:\n";
+    while (getline(file, line)) {
+        cout << line << endl;
+    }
+
+    file.close();
+}
 
     ~Auction() {
         for (int i = 0; i < carCount; i++) {
@@ -166,29 +196,99 @@ public:
 
 
 int main() {
-    Auction house(" Auto Auction");
+    Auction house("Auto Auction");
 
-    house.addCar(new ClassicCar("BMW", "E46 Coupe", 1997, 18000));
-    house.addCar(new ClassicCar("Porsche", "911 Turbo", 1996, 62000));
-    house.addCar(new ModifiedCar("Toyota", "Mark II", 1994, 95000, "Twin Turbo"));
-    house.addCar(new ModifiedCar("Nissan", "Skyline R34", 1999, 120000, "V12-Century Swaped"));
+    int choice;
 
-    house.addBidder(Bidder("Zakki", 125000));
-    house.addBidder(Bidder("Afaq ", 10000));
-    house.addBidder(Bidder("Bisma ", 70000));
+    do {
+        cout << "\n====== AUTO AUCTION MENU ======\n";
+        cout << "1. Add Classic Car\n";
+        cout << "2. Add Modified Car\n";
+        cout << "3. Add Bidder\n";
+        cout << "4. Show Auction Lots\n";
+        cout << "5. Show Bidders\n";
+        cout << "6. Save to File\n";
+        cout << "7. Exit\n";
+        cout << "Enter choice: ";
+        cin >> choice;
 
-    house.showLots();
-    house.showBidders();
+        try {
+            if (choice == 1) {
+                string make, model;
+                int year;
+                double price;
 
-    house.saveToFile("Auction.txt");
+                cout << "Enter Make: ";
+                cin >> make;
+                cout << "Enter Model: ";
+                cin >> model;
+                cout << "Enter Year: ";
+                cin >> year;
+                cout << "Enter Price: ";
+                cin >> price;
 
-    try {
-        house.addCar(new ClassicCar("Mazda", "RX-7 FD", 1995, 45000));
-        house.addCar(new ClassicCar("Ferrari", "458 Pista", 1993, 95000));
-    }
-    catch (const char* message) {
-        cout << "\nException: " << message << endl;
-    }
+                house.addCar(new ClassicCar(make, model, year, price));
+                cout << "Classic Car Added!\n";
+            }
+
+            else if (choice == 2) {
+                string make, model, mod;
+                int year;
+                double price;
+
+                cout << "Enter Make: ";
+                cin >> make;
+                cout << "Enter Model: ";
+                cin >> model;
+                cout << "Enter Year: ";
+                cin >> year;
+                cout << "Enter Price: ";
+                cin >> price;
+                cout << "Enter Modification: ";
+                cin >> mod;
+
+                house.addCar(new ModifiedCar(make, model, year, price, mod));
+                cout << "Modified Car Added!\n";
+            }
+
+            else if (choice == 3) {
+                string name;
+                double budget;
+
+                cout << "Enter Bidder Name: ";
+                cin >> name;
+                cout << "Enter Budget: ";
+                cin >> budget;
+
+                house.addBidder(Bidder(name, budget));
+                cout << "Bidder Added!\n";
+            }
+
+            else if (choice == 4) {
+                house.showLots();
+            }
+
+            else if (choice == 5) {
+                house.showBidders();
+            }
+
+            else if (choice == 6) {
+                house.saveToFile("Auction.txt");
+            }
+
+            else if (choice == 7) {
+                cout << "Exiting Program...\n";
+            }
+
+            else {
+                cout << "Invalid choice!\n";
+            }
+
+        } catch (const char* message) {
+            cout << "Exception: " << message << endl;
+        }
+
+    } while (choice != 7);
 
     return 0;
 }
