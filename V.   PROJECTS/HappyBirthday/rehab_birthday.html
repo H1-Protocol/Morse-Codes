@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy Birthday Rehab</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Bebas+Neue&family=Noto+Sans+JP:wght@100;400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0008;font-family:'Noto Sans JP',sans-serif}
+
+/* ── CANVAS STACK ── */
+canvas{position:fixed;top:0;left:0;width:100%;height:100%}
+#c-bg{z-index:1}
+#c-ink{z-index:2}
+#c-fx{z-index:4}
+
+/* ── GRAIN ── */
+body::after{
+  content:'';position:fixed;inset:0;z-index:99;pointer-events:none;
+  opacity:.18;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.88' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:gr .06s steps(1) infinite;
+}
+@keyframes gr{0%{background-position:0 0}25%{background-position:-40px -20px}50%{background-position:20px 50px}75%{background-position:-15px 25px}}
+
+/* ── HALFTONE OVERLAY ── */
+#halftone{
+  position:fixed;inset:0;z-index:3;pointer-events:none;
+  background-image:radial-gradient(circle,rgba(255,255,255,.04) 1px,transparent 1px);
+  background-size:8px 8px;
+  mix-blend-mode:screen;
+}
+
+/* ── SCAN LINES ── */
+#scan{
+  position:fixed;inset:0;z-index:5;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.05) 3px,rgba(0,0,0,.05) 4px);
+}
+
+/* ── VIGNETTE ── */
+#vig{
+  position:fixed;inset:0;z-index:6;pointer-events:none;
+  background:radial-gradient(ellipse 75% 75% at 50% 50%,transparent 35%,rgba(0,0,0,.82) 100%);
+}
+
+/* ── SPEED LINES LAYER ── */
+#speed{position:fixed;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+.spline{
+  position:absolute;top:0;bottom:0;width:1px;
+  transform-origin:center center;
+  animation:speedpulse linear infinite;
+  background:linear-gradient(to bottom,transparent,rgba(255,200,0,.25),rgba(255,200,0,.5),rgba(255,200,0,.25),transparent);
+}
+@keyframes speedpulse{
+  0%{opacity:0;transform:scaleY(0) translateX(0)}
+  15%{opacity:1}
+  85%{opacity:.4}
+  100%{opacity:0;transform:scaleY(1) translateX(0)}
+}
+
+/* ── CHAPTER CARD (manga panel top) ── */
+#chapter{
+  position:fixed;top:0;left:0;right:0;z-index:20;
+  height:52px;background:#000;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;
+  border-bottom:3px solid #FFD700;
+}
+#ch-left{
+  font-family:'Bangers',cursive;font-size:13px;letter-spacing:.4em;
+  color:rgba(255,255,255,.35);text-transform:uppercase;
+}
+#ch-right{
+  font-family:'Noto Sans JP',sans-serif;font-weight:100;font-size:10px;
+  letter-spacing:.6em;color:rgba(255,255,255,.25);text-transform:uppercase;
+}
+#ch-dot{
+  width:8px;height:8px;border-radius:50%;background:#FFD700;
+  animation:dotpulse 1.2s ease-in-out infinite;
+}
+@keyframes dotpulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+
+/* ── BOTTOM BAR ── */
+#botbar{
+  position:fixed;bottom:0;left:0;right:0;z-index:20;
+  height:48px;background:#000;border-top:2px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;gap:32px;
+}
+.bitem{font-family:'Noto Sans JP',sans-serif;font-weight:100;font-size:8px;
+  letter-spacing:.4em;color:rgba(255,255,255,.2);text-transform:uppercase;}
+.bitem.hi{color:#FFD700;font-weight:400}
+
+/* ── MAIN HUD ── */
+#hud{
+  position:fixed;inset:0;z-index:10;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  pointer-events:none;text-align:center;
+  padding:60px 30px;
+}
+
+/* japanese subtitle */
+.jp-sub{
+  font-family:'Noto Sans JP',sans-serif;font-weight:100;
+  font-size:clamp(.75rem,2vw,1rem);
+  letter-spacing:.5em;color:rgba(255,200,0,.6);
+  opacity:0;animation:riseup .8s ease forwards .3s;
+  margin-bottom:.6rem;
+}
+
+/* REHAB — big manga title with outline + shadow */
+.name-wrap{position:relative;display:inline-block}
+.name-shadow{
+  font-family:'Bangers',cursive;
+  font-size:clamp(5rem,22vw,18rem);
+  line-height:.85;letter-spacing:.04em;
+  color:#000;
+  position:absolute;top:6px;left:6px;width:100%;
+  opacity:0;animation:slamdown 1s cubic-bezier(.16,1,.3,1) forwards .6s;
+  -webkit-text-stroke:2px #000;
+}
+.name-main{
+  font-family:'Bangers',cursive;
+  font-size:clamp(5rem,22vw,18rem);
+  line-height:.85;letter-spacing:.04em;
+  color:#FFD700;
+  -webkit-text-stroke:3px #000;
+  position:relative;
+  opacity:0;animation:slamdown 1s cubic-bezier(.16,1,.3,1) forwards .55s;
+  filter:drop-shadow(0 0 30px rgba(255,200,0,.5));
+}
+/* manga action lines radiating from name */
+.name-main::before{
+  content:'';position:absolute;inset:-40px;
+  background:conic-gradient(
+    from 0deg,
+    transparent 0deg,rgba(255,200,0,.04) 2deg,transparent 4deg,
+    transparent 8deg,rgba(255,200,0,.03) 9deg,transparent 11deg,
+    transparent 18deg,rgba(255,200,0,.04) 19deg,transparent 21deg,
+    transparent 30deg,rgba(255,200,0,.05) 31deg,transparent 33deg,
+    transparent 44deg,rgba(255,200,0,.03) 45deg,transparent 47deg,
+    transparent 60deg,rgba(255,200,0,.04) 61deg,transparent 63deg,
+    transparent 80deg,rgba(255,200,0,.03) 81deg,transparent 83deg,
+    transparent 100deg,rgba(255,200,0,.05) 101deg,transparent 103deg,
+    transparent 130deg,rgba(255,200,0,.03) 131deg,transparent 133deg,
+    transparent 160deg,rgba(255,200,0,.04) 161deg,transparent 163deg,
+    transparent 200deg,rgba(255,200,0,.05) 201deg,transparent 203deg,
+    transparent 240deg,rgba(255,200,0,.03) 241deg,transparent 243deg,
+    transparent 280deg,rgba(255,200,0,.04) 281deg,transparent 283deg,
+    transparent 320deg,rgba(255,200,0,.03) 321deg,transparent 323deg
+  );
+  border-radius:50%;
+  animation:spinlines 30s linear infinite;
+  pointer-events:none;
+  mix-blend-mode:screen;
+}
+@keyframes spinlines{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+/* happy birthday line */
+.hb-line{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(1.2rem,4vw,3rem);
+  letter-spacing:.25em;color:rgba(255,255,255,.8);
+  -webkit-text-stroke:.5px rgba(255,255,255,.4);
+  opacity:0;animation:riseup .8s ease forwards 1.2s;
+  margin-top:.6rem;
+}
+
+/* date badge */
+.date-badge{
+  display:inline-flex;align-items:center;gap:10px;
+  margin-top:1.4rem;
+  border:1px solid rgba(255,200,0,.3);
+  padding:6px 20px;
+  opacity:0;animation:riseup .8s ease forwards 1.6s;
+}
+.date-inner{
+  font-family:'Noto Sans JP',sans-serif;font-weight:100;
+  font-size:clamp(.6rem,1.5vw,.85rem);letter-spacing:.5em;
+  color:rgba(255,200,0,.7);text-transform:uppercase;
+}
+
+/* speech bubble */
+#bubble{
+  position:fixed;z-index:15;
+  bottom:80px;right:40px;
+  max-width:200px;
+  background:#fff;
+  border:3px solid #000;
+  border-radius:18px 18px 4px 18px;
+  padding:14px 18px;
+  box-shadow:4px 4px 0 #000;
+  opacity:0;animation:bubblein .6s cubic-bezier(.16,1,.3,1) forwards 2.2s;
+  pointer-events:none;
+}
+#bubble p{
+  font-family:'Bangers',cursive;font-size:14px;letter-spacing:.06em;
+  color:#000;line-height:1.4;text-align:center;
+}
+#bubble-tail{
+  position:absolute;bottom:-14px;right:20px;
+  width:0;height:0;
+  border-left:10px solid transparent;
+  border-right:4px solid transparent;
+  border-top:14px solid #000;
+}
+#bubble-tail::after{
+  content:'';position:absolute;top:-16px;left:-8px;
+  width:0;height:0;
+  border-left:8px solid transparent;
+  border-right:3px solid transparent;
+  border-top:12px solid #fff;
+}
+
+/* impact word - NARUTO style */
+#impact{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Bangers',cursive;
+  font-size:clamp(8rem,30vw,28rem);
+  color:transparent;
+  -webkit-text-stroke:3px rgba(255,200,0,.12);
+  letter-spacing:.05em;
+  z-index:1;pointer-events:none;
+  animation:impactpulse 4s ease-in-out infinite;
+  white-space:nowrap;
+}
+@keyframes impactpulse{0%,100%{opacity:.4;transform:translate(-50%,-50%) scale(.98)}50%{opacity:.7;transform:translate(-50%,-50%) scale(1.01)}}
+
+/* PANEL BORDERS — manga panel effect */
+#panel-tl,#panel-tr,#panel-bl,#panel-br{
+  position:fixed;z-index:7;pointer-events:none;
+}
+#panel-tl{top:52px;left:0;width:3px;height:40vh;background:linear-gradient(to bottom,#FFD700,transparent)}
+#panel-tr{top:52px;right:0;width:3px;height:40vh;background:linear-gradient(to bottom,#FFD700,transparent)}
+#panel-bl{bottom:48px;left:0;width:3px;height:35vh;background:linear-gradient(to top,rgba(255,200,0,.4),transparent)}
+#panel-br{bottom:48px;right:0;width:3px;height:35vh;background:linear-gradient(to top,rgba(255,200,0,.4),transparent)}
+
+/* ── KUNAI CURSOR ── */
+#cursor{position:fixed;z-index:500;pointer-events:none;transform:translate(-50%,-50%) rotate(45deg);font-size:18px;transition:transform .08s}
+
+/* ── FX PARTICLES ── */
+.spark{position:fixed;pointer-events:none;z-index:50;border-radius:50%;animation:sparkfly linear forwards}
+@keyframes sparkfly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0)}}
+
+/* ── CHAKRA RINGS ── */
+.cring{
+  position:fixed;top:50%;left:50%;
+  border-radius:50%;border:1px solid;
+  transform:translate(-50%,-50%) scale(0);
+  pointer-events:none;z-index:8;
+  animation:ringexpand ease-out forwards;
+}
+@keyframes ringexpand{0%{transform:translate(-50%,-50%) scale(0);opacity:.7}100%{transform:translate(-50%,-50%) scale(4);opacity:0}}
+
+/* ── KEYFRAMES ── */
+@keyframes riseup{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slamdown{
+  0%{opacity:0;transform:scale(1.3) translateY(-20px);filter:blur(8px) drop-shadow(0 0 0 rgba(255,200,0,0))}
+  60%{transform:scale(.95) translateY(4px)}
+  100%{opacity:1;transform:scale(1) translateY(0);filter:blur(0) drop-shadow(0 0 30px rgba(255,200,0,.5))}
+}
+@keyframes bubblein{from{opacity:0;transform:scale(.8) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- structural -->
+<div id="halftone"></div>
+<div id="scan"></div>
+<div id="vig"></div>
+<div id="speed"></div>
+<div id="panel-tl"></div><div id="panel-tr"></div>
+<div id="panel-bl"></div><div id="panel-br"></div>
+
+<!-- canvases -->
+<canvas id="c-bg"></canvas>
+<canvas id="c-ink"></canvas>
+<canvas id="c-fx"></canvas>
+
+<!-- manga impact word bg -->
+<div id="impact">REHAB</div>
+
+<!-- top bar -->
+<div id="chapter">
+  <span id="ch-left">Birthday Special · Chapter 06.04</span>
+  <div id="ch-dot"></div>
+  <span id="ch-right">June 4th · The Day She Arrived</span>
+</div>
+
+<!-- main title -->
+<div id="hud">
+  <div class="jp-sub">誕生日おめでとう — Happy Birthday</div>
+  <div class="name-wrap">
+    <div class="name-shadow">REHAB</div>
+    <div class="name-main">REHAB</div>
+  </div>
+  <div class="hb-line">Welcome To Chapter 23 </div>
+  <div class="date-badge">
+    <span class="date-inner">4 June · THE SENIOR ARCHITECT</span>
+  </div>
+</div>
+
+<!-- speech bubble -->
+<div id="bubble">
+  <p>DON'T WORRY,<br>YOU'RE STILL<br>A YOUNG LEGEND ⚔️</p> 
+  <div id="bubble-tail"></div>
+</div>
+
+<!-- bottom bar -->
+<div id="botbar">
+  <span class="bitem">Illustrations</span>
+  <span class="bitem hi">✦</span>
+  <span class="bitem">Comics</span>
+  <span class="bitem hi">✦</span>
+  <span class="bitem">Animation</span>
+  <span class="bitem hi">✦</span>
+  <span class="bitem">Music</span>
+  <span class="bitem hi">✦</span>
+  <span class="bitem">Naruto</span>
+</div>
+
+<!-- kunai cursor -->
+<div id="cursor">🗡️</div>
+
+<script>
+// ── CURSOR ──
+const cur=document.getElementById('cursor');
+document.addEventListener('mousemove',e=>{cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px'});
+
+// ── CANVAS SETUP ──
+const [cBG,cInk,cFX]=['c-bg','c-ink','c-fx'].map(id=>document.getElementById(id));
+const [xBG,xInk,xFX]=[cBG,cInk,cFX].map(c=>c.getContext('2d'));
+let W=0,H=0;
+function resize(){
+  W=innerWidth;H=innerHeight;
+  [cBG,cInk,cFX].forEach(c=>{c.width=W;c.height=H});
+}
+resize();window.addEventListener('resize',resize);
+
+// ── SPEED LINES ──
+const spContainer=document.getElementById('speed');
+function buildSpeedLines(){
+  spContainer.innerHTML='';
+  const cx=W/2,cy=H/2;
+  for(let i=0;i<40;i++){
+    const el=document.createElement('div');
+    el.className='spline';
+    const angle=Math.random()*360;
+    const dist=Math.random()*Math.max(W,H)*.6+100;
+    const x=cx+Math.cos(angle*Math.PI/180)*dist;
+    el.style.cssText=`left:${x}px;transform:rotate(${angle}deg);
+      animation-duration:${Math.random()*2+1.5}s;
+      animation-delay:${Math.random()*3}s;
+      opacity:0;height:${Math.random()*60+30}%;top:${Math.random()*40}%;`;
+    spContainer.appendChild(el);
+  }
+}
+buildSpeedLines();
+
+// ── STARS / BG ──
+const stars=Array.from({length:300},()=>({
+  x:Math.random(),y:Math.random(),
+  r:Math.pow(Math.random(),3)*1.8+.1,
+  a:Math.random()*.6+.1,
+  ph:Math.random()*Math.PI*2,spd:Math.random()*.015+.003,
+}));
+
+// ink splatter shapes
+const splatters=Array.from({length:8},()=>({
+  x:Math.random(),y:Math.random(),
+  r:Math.random()*80+30,
+  a:Math.random()*.08+.02,
+  rot:Math.random()*Math.PI*2,
+}));
+
+// floating kanji / symbols
+const symbols=[
+  {ch:'忍',x:.15,y:.25,s:60,a:.06},{ch:'力',x:.82,y:.18,s:45,a:.04},
+  {ch:'夢',x:.08,y:.65,s:50,a:.05},{ch:'絆',x:.88,y:.7,s:55,a:.06},
+  {ch:'火',x:.5,y:.12,s:40,a:.04},{ch:'風',x:.7,y:.5,s:35,a:.03},
+  {ch:'✦',x:.25,y:.8,s:28,a:.08},{ch:'✦',x:.75,y:.3,s:20,a:.06},
+];
+
+let T=0;
+
+// ── DRAW BG ──
+function drawBG(){
+  const ctx=xBG;
+  ctx.clearRect(0,0,W,H);
+
+  // deep dark bg — manga night
+  const bg=ctx.createRadialGradient(W*.5,H*.45,0,W*.5,H*.45,Math.max(W,H)*.75);
+  bg.addColorStop(0,'#140010');
+  bg.addColorStop(.4,'#0a0008');
+  bg.addColorStop(1,'#000000');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // gold aura from center
+  const aura=ctx.createRadialGradient(W*.5,H*.45,0,W*.5,H*.45,W*.45);
+  aura.addColorStop(0,'rgba(255,200,0,.06)');
+  aura.addColorStop(.5,'rgba(255,140,0,.03)');
+  aura.addColorStop(1,'transparent');
+  ctx.fillStyle=aura;ctx.fillRect(0,0,W,H);
+
+  // stars
+  stars.forEach(s=>{
+    s.ph+=s.spd;
+    const a=s.a*(.5+.5*Math.sin(s.ph));
+    ctx.beginPath();ctx.arc(s.x*W,s.y*H,s.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,255,255,${a})`;ctx.fill();
+  });
+
+  // ink splatters
+  splatters.forEach((sp,i)=>{
+    const px=sp.x*W+Math.sin(T*.3+i)*15;
+    const py=sp.y*H+Math.cos(T*.2+i)*10;
+    ctx.save();ctx.translate(px,py);ctx.rotate(sp.rot+T*.01);
+    // rough blob shape
+    ctx.beginPath();
+    for(let a=0;a<Math.PI*2;a+=.3){
+      const r=sp.r*(1+Math.sin(a*3+i)*.3);
+      const x=Math.cos(a)*r, y=Math.sin(a)*r*.6;
+      a===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.fillStyle=`rgba(30,0,0,${sp.a})`;ctx.fill();
+    ctx.restore();
+  });
+
+  // floating kanji
+  symbols.forEach((s,i)=>{
+    const py=s.y*H+Math.sin(T*.4+i)*.012*H;
+    ctx.font=`${s.s}px 'Noto Sans JP'`;
+    ctx.fillStyle=`rgba(255,200,0,${s.a+Math.sin(T*.5+i)*.02})`;
+    ctx.textAlign='center';
+    ctx.fillText(s.ch,s.x*W,py);
+  });
+}
+
+// ── DRAW INK (action lines radiating from center) ──
+function drawInk(){
+  const ctx=xInk;
+  ctx.clearRect(0,0,W,H);
+  const cx=W*.5,cy=H*.44;
+
+  // radial speed lines — manga panel action effect
+  const lineCount=80;
+  for(let i=0;i<lineCount;i++){
+    const angle=(i/lineCount)*Math.PI*2;
+    const inner=Math.random()*60+80;
+    const outer=inner+Math.random()*300+100;
+    const spread=(.002+Math.random()*.003);
+    const a1=angle-spread, a2=angle+spread;
+
+    const alpha=Math.random()*.12+.02;
+    ctx.beginPath();
+    ctx.moveTo(cx+Math.cos(a1)*inner,cy+Math.sin(a1)*inner);
+    ctx.lineTo(cx+Math.cos(angle)*outer,cy+Math.sin(angle)*outer);
+    ctx.lineTo(cx+Math.cos(a2)*inner,cy+Math.sin(a2)*inner);
+    ctx.closePath();
+    ctx.fillStyle=`rgba(255,200,0,${alpha*Math.abs(Math.sin(T*2+i))})`;
+    ctx.fill();
+  }
+
+  // chakra circle — concentric rings
+  [160,200,240,280].forEach((r,i)=>{
+    const dashLen=Math.PI*2*r/24;
+    ctx.setLineDash([dashLen*.4,dashLen*.6]);
+    ctx.lineDashOffset=T*20*(i%2===0?1:-1);
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(255,200,0,${.04+i*.005})`;
+    ctx.lineWidth=i%2===0?1:.5;
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+}
+
+// ── DRAW FX (post layer) ──
+function drawFX(){
+  const ctx=xFX;
+  ctx.clearRect(0,0,W,H);
+
+  // chromatic aberration bands — subtle horizontal glitch lines
+  if(Math.sin(T*3)>.85){
+    const gy=Math.random()*H;
+    const gh=Math.random()*4+1;
+    ctx.fillStyle='rgba(255,0,0,.06)';
+    ctx.fillRect(0,gy,W,gh);
+    ctx.fillStyle='rgba(0,255,255,.06)';
+    ctx.fillRect(3,gy,W,gh);
+  }
+
+  // corner vignette hard
+  const v=ctx.createRadialGradient(W*.5,H*.5,Math.min(W,H)*.15,W*.5,H*.5,Math.min(W,H)*.75);
+  v.addColorStop(0,'transparent');v.addColorStop(1,'rgba(0,0,0,.55)');
+  ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+}
+
+// ── MAIN LOOP ──
+function loop(){
+  T+=.006;
+  drawBG();
+  drawInk();
+  drawFX();
+  requestAnimationFrame(loop);
+}
+loop();
+
+// ── CHAKRA RINGS on click ──
+document.addEventListener('click',e=>{
+  // spark burst
+  for(let i=0;i<20;i++){
+    const sp=document.createElement('div');
+    sp.className='spark';
+    const a=Math.random()*Math.PI*2, d=Math.random()*100+20;
+    sp.style.cssText=`
+      left:${e.clientX}px;top:${e.clientY}px;
+      width:${Math.random()*4+1}px;height:${Math.random()*4+1}px;
+      background:${Math.random()>.5?'#FFD700':'#FF6600'};
+      --tx:${Math.cos(a)*d}px;--ty:${Math.sin(a)*d}px;
+      animation-duration:${Math.random()*.5+.3}s;
+    `;
+    document.body.appendChild(sp);
+    setTimeout(()=>sp.remove(),900);
+  }
+
+  // chakra ring
+  const ring=document.createElement('div');
+  ring.className='cring';
+  const sz=Math.random()*60+80;
+  ring.style.cssText=`
+    width:${sz}px;height:${sz}px;
+    border-color:rgba(255,200,0,${Math.random()*.4+.2});
+    animation-duration:${Math.random()*.5+.6}s;
+  `;
+  document.body.appendChild(ring);
+  setTimeout(()=>ring.remove(),1200);
+});
+
+// ── GLITCH flash every few seconds ──
+setInterval(()=>{
+  const el=document.createElement('div');
+  el.style.cssText=`position:fixed;inset:0;z-index:98;pointer-events:none;
+    background:rgba(255,200,0,.03);mix-blend-mode:screen;
+    animation:none;`;
+  document.body.appendChild(el);
+  setTimeout(()=>{el.style.background='rgba(255,0,0,.04)';},40);
+  setTimeout(()=>{el.style.background='rgba(0,255,255,.03)';},80);
+  setTimeout(()=>el.remove(),120);
+},3500);
+
+// ── RANDOM SOUND EFFECT WORDS (manga style) ──
+const sfx=['ZAP!','BOOM!','YOSH!','RAAAH!','CHAK!','SWOOSH!'];
+setInterval(()=>{
+  const word=sfx[Math.floor(Math.random()*sfx.length)];
+  const el=document.createElement('div');
+  const x=15+Math.random()*70, y=15+Math.random()*70;
+  el.style.cssText=`
+    position:fixed;left:${x}%;top:${y}%;z-index:15;pointer-events:none;
+    font-family:'Bangers',cursive;font-size:${Math.random()*24+18}px;
+    letter-spacing:.08em;
+    color:#FFD700;-webkit-text-stroke:1px #000;
+    text-shadow:2px 2px 0 #000;
+    transform:rotate(${(Math.random()-.5)*25}deg);
+    animation:sfxpop .8s cubic-bezier(.16,1,.3,1) forwards;
+  `;
+  el.textContent=word;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),900);
+},2800);
+
+// inject sfx keyframe
+const s=document.createElement('style');
+s.textContent=`@keyframes sfxpop{
+  0%{opacity:0;transform:rotate(var(--r,0deg)) scale(.4)}
+  40%{opacity:1;transform:rotate(var(--r,0deg)) scale(1.15)}
+  100%{opacity:0;transform:rotate(var(--r,0deg)) scale(1)}
+}`;
+document.head.appendChild(s);
+</script>
+</body>
+</html>
