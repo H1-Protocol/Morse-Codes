@@ -2,7 +2,7 @@ The Whispering Manor - C++ Mystery Game
 ========================================
 
 University Finals Project - Semester 2
-Student: zakki
+Student: Zakki
 
 Required Concepts Implemented:
 ------------------------------
@@ -17,7 +17,7 @@ Required Concepts Implemented:
 6. Operator Overloading: Overloaded operator+ in the Player class to add items to inventory.
 7. File Handling: saveGame() writes the player's name and current room to 'save.txt'.
 
-How to Compile and Run:
+How to Compile, and then Run:
 -----------------------
 Compile: g++ -o mystery_game.exe main.cpp
 Run: ./mystery_game.exe

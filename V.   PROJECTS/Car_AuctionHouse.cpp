@@ -1,5 +1,7 @@
 #include <iostream>
 #include <fstream>
+#include <limits> //For the getline to work, and to not make an infinite loop
+#include <cstdio> // Required for remove()
 using namespace std;
 
 class Car {
@@ -67,9 +69,9 @@ public:
     }
 
     void display() const {
-        cout << "[MODIFIED] ";
+        cout << " [MODIFIED] ";
         Car::display();
-        cout << "   Mod done: " << modification << endl;
+        cout << "   MOD Installed: " << modification << endl;
     }
 };
 class Bidder {
@@ -195,100 +197,75 @@ public:
 };
 
 
-int main() {
+ int main() {
     Auction house("Auto Auction");
-
     int choice;
 
     do {
         cout << "\n====== AUTO AUCTION MENU ======\n";
-        cout << "1. Add Classic Car\n";
-        cout << "2. Add Modified Car\n";
-        cout << "3. Add Bidder\n";
-        cout << "4. Show Auction Lots\n";
-        cout << "5. Show Bidders\n";
-        cout << "6. Save to File\n";
-        cout << "7. Exit\n";
+        cout << "1. Add Classic Car\n2. Add Modified Car\n3. Add Bidder\n";
+        cout << "4. Show Auction Lots\n5. Show Bidders\n6. Save to File\n";
+        cout << "7. Read from File\n8. Delete File\n9. Exit\n";
         cout << "Enter choice: ";
-        cin >> choice;
+        
+        if (!(cin >> choice)) {
+            cout << "Invalid input! Please enter a number." << endl;
+            cin.clear();
+            cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
+            continue;
+        }
+        cin.ignore(); // Consume the trailing newline
 
         try {
-            if (choice == 1) {
-                string make, model;
-                int year;
-                double price;
-
-                cout << "Enter Make: ";
-                cin >> make;
-                cout << "Enter Model: ";
-                cin >> model;
-                cout << "Enter Year: ";
-                cin >> year;
-                cout << "Enter Price: ";
-                cin >> price;
-
+            switch (choice) {
+            case 1: {
+                string make, model; int year; double price;
+                cout << "Enter Make: "; getline(cin, make);
+                cout << "Enter Model: "; getline(cin, model);
+                cout << "Enter Year: "; cin >> year;
+                cout << "Enter Price: "; cin >> price;
+                cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
                 house.addCar(new ClassicCar(make, model, year, price));
                 cout << "Classic Car Added!\n";
+                break;
             }
-
-            else if (choice == 2) {
-                string make, model, mod;
-                int year;
-                double price;
-
-                cout << "Enter Make: ";
-                cin >> make;
-                cout << "Enter Model: ";
-                cin >> model;
-                cout << "Enter Year: ";
-                cin >> year;
-                cout << "Enter Price: ";
-                cin >> price;
-                cout << "Enter Modification: ";
-                cin >> mod;
-
+            case 2: { 
+                string make, model, mod; int year; double price;
+                cout << "Enter Make: "; getline(cin, make);
+                cout << "Enter Model: "; getline(cin, model);
+                cout << "Enter Year: "; cin >> year;
+                cout << "Enter Price: "; cin >> price;
+                cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n'); 
+                cout << "Enter Modification: "; getline(cin, mod);
                 house.addCar(new ModifiedCar(make, model, year, price, mod));
                 cout << "Modified Car Added!\n";
+                break;
             }
-
-            else if (choice == 3) {
-                string name;
-                double budget;
-
-                cout << "Enter Bidder Name: ";
-                cin >> name;
-                cout << "Enter Budget: ";
-                cin >> budget;
-
+            case 3: { // Add Bidder
+                string name; double budget;
+                cout << "Enter Bidder Name: "; getline(cin, name);
+                cout << "Enter Budget: "; cin >> budget;
+                cin.ignore((std::numeric_limits<std::streamsize>::max)(), '\n');
                 house.addBidder(Bidder(name, budget));
                 cout << "Bidder Added!\n";
+                break;
             }
-
-            else if (choice == 4) {
-                house.showLots();
+            case 4: house.showLots(); break;
+            case 5: house.showBidders(); break;
+            case 6: house.saveToFile("Auction.txt"); break;
+            case 7: house.readFromFile("Auction.txt"); break;
+            case 8: { // Delete the File
+                if (remove("Auction.txt") == 0) cout << "File 'Auction.txt' deleted successfully.\n";
+                else cout << "Error: Could not delete file (it may not exist).\n";
+                break;
             }
-
-            else if (choice == 5) {
-                house.showBidders();
+            case 9: cout << "Exiting Program...\n"; break;
+            default: cout << "Invalid choice!\n";
             }
-
-            else if (choice == 6) {
-                house.saveToFile("Auction.txt");
-            }
-
-            else if (choice == 7) {
-                cout << "Exiting Program...\n";
-            }
-
-            else {
-                cout << "Invalid choice!\n";
-            }
-
         } catch (const char* message) {
             cout << "Exception: " << message << endl;
         }
-
-    } while (choice != 7);
+    } while (choice != 9);
 
     return 0;
 }
